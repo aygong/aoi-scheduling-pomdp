@@ -1,6 +1,6 @@
 # Age-of-Information-based Scheduling in Multiuser Uplinks with Stochastic Arrivals: A POMDP Approach
 
-[Aoyu Gong](https://aygong.com/), Tong Zhang, [He Chen](http://iiotc.ie.cuhk.edu.hk/), Yijin Zhang
+[Aoyu Gong*](https://aygong.com/), Tong Zhang*, [He Chen](http://iiotc.ie.cuhk.edu.hk/), Yijin Zhang
 
 [`IEEE`](https://ieeexplore.ieee.org/document/9348022) | [`arXiv`](https://arxiv.org/pdf/2005.05443.pdf) | [`BibTeX`](#Citation)
 
