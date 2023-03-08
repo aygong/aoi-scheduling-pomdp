@@ -1,7 +1,7 @@
 csl = 1; % 1 - small scale; 2 - large scale
 K = 2; % the number of end nodes
 T = 50; % the finite horizon
-D = 10; % the state truncation
+D = 15; % the state truncation
 la = zeros(1,K); % the status update arrival rate
 ch = zeros(1,K); % the successful transmission probability
 wt = zeros(1,K); % the importance weight of end nodes
