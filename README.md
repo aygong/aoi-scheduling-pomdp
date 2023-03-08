@@ -6,9 +6,9 @@
 
 <div align="center">
 <p>
-<img src="assets/AoI.png" height="150"/> &nbsp;&nbsp;&nbsp;&nbsp; <img src="assets/Evolution.png" height="150"/> 
+<img src="assets/AoI.png" height="160"/> &nbsp;&nbsp;&nbsp;&nbsp; <img src="assets/Evolution.png" height="160"/> 
 </p>
-<div>
+</div>
 
 
 <table>
