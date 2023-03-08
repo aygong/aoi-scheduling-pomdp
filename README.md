@@ -6,9 +6,10 @@
 
 <div align="center">
 <p>
-<img src="assets/AoI.png" height="180"/> &nbsp;&nbsp;&nbsp;&nbsp; <img src="assets/Evolution.png" height="180"/> 
+<img src="assets/AoI.png" height="150"/> &nbsp;&nbsp;&nbsp;&nbsp; <img src="assets/Evolution.png" height="150"/> 
 </p>
 <div>
+
 
 <table>
 <tr><td><em>
