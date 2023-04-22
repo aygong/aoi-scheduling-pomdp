@@ -17,17 +17,17 @@ global simu_switch simu_indept
 % Set the type of the network configuration: 'small' and 'large'
 % 'small': small network parameters
 % 'large': large network parameters
-network_config = 'large';
+network_config = 'small';
 
 % Set the network configuration
 switch network_config
     case 'small'
         K = 2;
         T = 50;
-        D = 10;
+        D = 15;
         simu_indept = 1e+5;
     case 'large'
-        K = 6;
+        K = 5;
         T = 1e+6;
         D = 50;
         simu_indept = 10;
