@@ -1,7 +1,7 @@
 clc, clear
 
 %% Declare global variables
-% K: the number of end nodes         
+% K: the number of end nodes
 % T: the finite horizon
 % D: the state truncation
 global K T D
