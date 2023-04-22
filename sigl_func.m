@@ -1,22 +1,20 @@
-function [Z,G]=sigl_func(K,D,la,ch)
-Z = zeros(D,D,K);
+function [transF, obserF] = sigl_func()
+% Compute the POMDP functions of each end node
+% Declare global variables
+% See aoi_main.m
+global K D
+global lambdas channels
+
+% Create the state transition function and observation function
+transF = zeros(D, D, K);
+obserF = zeros(D, D+1, K);
 for i = 1:K
     for zo = 1:D
-        for zx = 1:D
-            if zx == 1
-                Z(zo,zx,i) = la(i);
-                continue;
-            end
-            if zo+1 == zx || (zx == D && zo == D)
-                Z(zo,zx,i) = 1-la(i);
-            end
-        end
-    end
-end
-G = zeros(K,D,D+1);
-for i = 1:K
-    for z = 1:D
-        G(i,z,z) = ch(i);
-        G(i,z,D+1) = 1-ch(i);
+        % Compute the state transition function
+        transF(zo, 1, i) = lambdas(i);
+        transF(zo, min(D, zo+1), i) = 1 - lambdas(i);
+        % Compute the observation function
+        obserF(zo, zo, i) = channels(i);
+        obserF(zo, D+1, i) = 1 - channels(i);
     end
 end

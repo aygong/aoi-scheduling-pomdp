@@ -1,29 +1,60 @@
-csl = 1; % 1 - small scale; 2 - large scale
-K = 2; % the number of end nodes
-T = 50; % the finite horizon
-D = 15; % the state truncation
-la = zeros(1,K); % the status update arrival rate
-ch = zeros(1,K); % the successful transmission probability
-wt = zeros(1,K); % the importance weight of end nodes
-%% successful transmission probability
-SNR = 25; % the signal-to-noise ratio (SNR) / dB
-d = 5; % the distance from end nodes to the monitor / m
-tau = 2; % the path loss factor
-gth = 1; % the successful decoding threshold / bps/Hz
-ps = exp(-(d^tau)*(2^gth-1)/(10^(SNR/10))); % the successful transmission probability
-%% MAIN
-la(1:K) = 0.4;
-ch(1:K) = ps;
-wt(1:K) = 1;
-ksi = 1; % 1 - run simulation; others - do not run simulation
-SI = 1e+6; % simulation time
-switch csl
-    case 1
-        [dp_ana,dp_sim] = dp_theo(K,D,la,ch,wt,T,SI,ksi);
-        [mpp_ana,mpp_sim] = mpp_theo(K,D,la,ch,wt,T,SI,ksi);
-    case 2
-        mpf_sim = mpf_simu(K,D,la,ch,wt,T,SI);
-        mpp_sim = mpp_simu(K,D,la,ch,wt,T,SI);
-        map_sim = map_simu(K,D,la,ch,wt,T,SI);
-        rdp_sim = rdp_simu(K,D,la,ch,wt,T,SI);
+clc, clear
+
+%% Declare global variables
+% K: the number of end nodes         
+% T: the finite horizon
+% D: the state truncation
+global K T D
+% lambdas : the status update arrival rate
+% channels: the successful transmission probability
+% weights : the importance weight
+global lambdas channels weights
+% simu_switch: the simulation switch
+% simu_indept: the number of independent numerical experiments
+global simu_switch simu_indept
+
+% network_config: the type of the network configuration
+% Set the type of the network configuration: 'small' and 'large'
+% 'small': small network parameters
+% 'large': large network parameters
+network_config = 'large';
+
+% Set the network configuration
+switch network_config
+    case 'small'
+        K = 2;
+        T = 50;
+        D = 10;
+        simu_indept = 1e+5;
+    case 'large'
+        K = 6;
+        T = 1e+6;
+        D = 50;
+        simu_indept = 10;
+    otherwise
+        error("Unexpected network configuration.\n");
+end
+
+% Set the status update arrival rate
+lambdas = ones(1, K) * 0.4;
+% Set the successful transmission probability
+channels = ones(1, K) * 0.923987309719834;
+% Set the importance weight
+weights = ones(1, K);
+
+% Set the simulation switch
+simu_switch = true;
+
+%% Return the EWSAoI performance
+switch network_config
+    case 'small'
+        [dp_ana, dp_sim] = dp_theo();
+        [mpp_ana, mpp_sim] = mpp_theo();
+    case 'large'
+        mpf_sim = mpf_simu();
+        mpp_sim = mpp_simu();
+        map_sim = map_simu();
+        rdp_sim = rdp_simu();
+    otherwise
+        error("Unexpected network configuration.\n");
 end

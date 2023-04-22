@@ -1,59 +1,84 @@
-function [EWSAoI] = mpp_simu(K,D,la,ch,wt,T0,SI)
-[Z,G] = sigl_func(K,D,la,ch);
-z_nx = min((1:D)+1,D);
-EWSAoI = zeros(1,SI);
-parfor si = 1:SI
-    bp_no = zeros(K,D);
-    bp_no(:,1) = 1;
-    h = zeros(K,1); % the AoI of all end nodes
-    h(1:K) = 2;
-    z = ones(1,K); % the local age of all end nodes
-    ac = zeros(1,K);
-    for t = 1:T0
-        EWSAoI(si) = EWSAoI(si) + dot(wt,h);
-        if t < T0
-            ews_min = 1e+10;
-            h_nx = min(h+1,D);
-            for na = 1:K
-                ews = dot(wt,h_nx) - wt(na)*h_nx(na);
-                ews = ews + wt(na)*(dot(z_nx,bp_no(na,:))*ch(na) + h_nx(na)*(1-ch(na)));
-                if ews < ews_min
-                    ews_min = ews;
-                    ac = ones(1,K);
-                    ac(na) = 2;
-                end
+function [simu] = mpp_simu()
+% Simulate the myopic policy (partial knowledge)
+% Declare global variables
+% See aoi_main.m
+global K D T
+global lambdas channels weights
+global simu_indept
+
+% Define the basic components of the POMDP functions
+num_action = K;
+
+% Return the POMDP functions of each end node
+[transF, obserF] = sigl_func();
+
+z_next = min(D, (1:D) + 1);
+simu = zeros(1, simu_indept);
+
+parfor si = 1:simu_indept
+    % Run independent numerical experiments
+    % Initialize the local age of each end node
+    z = ones(K, 1);
+    % Initialize the AoI of each end node at the monitor
+    h = ones(K, 1) * 2;
+    % Initialize \mathbb{B}^{t}
+    B = zeros(K, D);
+    B(:, 1) = 1;
+    
+    for t = 1:T
+        simu(si) = simu(si) + dot(weights, h);
+        if t < T
+            % Determine the action
+            acR = zeros(1, num_action);
+            h_next = min(D, h + 1);
+            for na = 1:num_action
+                acR(na) = dot(weights, h_next) - weights(na) * h_next(na);
+                acR(na) = acR(na) + weights(na) ...
+                    * (channels(na) * dot(B(na, :), z_next) ...
+                    + (1 - channels(na)) * h_next(na));
             end
+            [~, pi] = min(acR);
+            action = ones(1, K);
+            action(pi) = 2;
         else
             continue
         end
-        ob = zeros(1,K);
-        for i = 1:K
-            if ac(i) == 2 && rand() < ch(i)
-                ob(i) = min(z(i),D);
-                h(i) = z(i) + 1;
+        % Update the AoI of each end node at the monitor
+        no = zeros(1, K);
+        for k = 1:K
+            if action(k) == 2 && rand() < channels(k)
+                no(k) = min(D, z(k));
+                h(k) = z(k) + 1;
             else
-                ob(i) = D + 1;
-                h(i) = h(i) + 1;
+                no(k) = D + 1;
+                h(k) = h(k) + 1;
             end
         end
-        h = min(h,D);
-        for i = 1:K
-            if rand() < la(i)
-                z(i) = 1;
+        h = min(h, D);
+        % Update the local age of each end node
+        for k = 1:K
+            if rand() < lambdas(k)
+                z(k) = 1;
             else
-                z(i) = z(i) + 1;
+                z(k) = z(k) + 1;
             end
         end
-        z = min(z,D);
-        for i = 1:K
-            if ac(i) == 2
-                bp_no(i,:) = bp_no(i,:).*G(i,:,ob(i))*Z(:,:,i);
-                bp_no(i,:) = bp_no(i,:)/sum(bp_no(i,:));
+        z = min(z, D);
+        % Update \mathbb{B}^{t}
+        for k = 1:K
+            if action(k) == 2
+                B(k, :) = B(k, :) .* obserF(:, no(k), k)' * transF(:, :, k);
+                B(k, :) = B(k, :) / sum(B(k, :));
             else
-                bp_no(i,:) = bp_no(i,:)*Z(:,:,i);
+                B(k, :) = B(k, :) * transF(:, :, k);
             end
         end
     end
+    
 end
-EWSAoI = sum(EWSAoI)/K/SI/T0;
-fprintf("mpp_simu = %d\n",EWSAoI);
+
+% Compute the EWSAoI (simu)
+simu = sum(simu) / T / K / simu_indept;
+
+% Print the EWSAoI (simu)
+fprintf("mpp_simu = %.6f\n", simu);

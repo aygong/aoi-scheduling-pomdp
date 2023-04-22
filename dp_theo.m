@@ -1,50 +1,61 @@
-function [theo,simu] = dp_theo(K,D,la,ch,wt,T0,SI,ksi)
-%% the state transition function and observation function
-n_st = D;
-n_ac = K;
-n_ob = D + 1;
-ob = 1:(D+1);
-[Z,G] = sigl_func(K,D,la,ch);
-%% generate the finite set of belief states
-[h_set,bp_set,bp_num,re_map] = beli_prod(K,D,T0,Z,G);
-T_max = length(h_set(1,1,:));
-%% dynamic programming
-vt = zeros(1,bp_num(T_max));
-for nb = 1:bp_num(T_max)
-    vt(nb) = sum(dot(h_set(:,nb,T_max),wt));
+function [theo, simu] = dp_theo()
+% Analyze the optimal policy (partial knowledge)
+% Declare global variables
+% See aoi_main.m
+global K D T
+global channels weights
+global simu_switch
+
+% Define the basic components of the POMDP functions
+num_action = K;
+num_observation = D + 1;
+
+% Return the POMDP functions of each end node
+[transF, obserF] = sigl_func();
+% Return the finite sets of belief states
+[h_set, B_set, num_belief, mapping] = beli_prod(transF, obserF);
+
+% Set the finite horizon during which the set of belief states changes
+T0 = length(h_set(1, 1, :));
+
+% Compute the expected total reward from slot 1 to slot T
+% V : the value function corresponding to the optimal policy
+% pi: the optimal policy
+V = zeros(num_belief(T0), T);
+pi = zeros(num_belief(T0), T);
+for nb = 1:num_belief(T0)
+    V(nb, T) = dot(h_set(:, nb, T0), weights);
 end
-pl = zeros(bp_num(T_max),T0); % the optimal policy
-for t = (T0-1):(-1):1
-    if t > T_max
-        k = T_max;
-    else
-        k = t;
-    end
-    vt_pr = zeros(1,bp_num(k));
-    parfor nb_1 = 1:bp_num(k)
-        dot_min = 1e+10;
-        vt_ac = zeros(1,n_ac);
-        for na = 1:n_ac
-            vt_ac(na) = sum(dot(h_set(:,nb_1,k),wt));
-            for no = 1:n_ob
-                if ob(no) < D + 1
-                    eta = bp_set(na,ob(no),nb_1,k)*ch(na);
-                else
-                    eta = 1 - ch(na);
-                end
-                nb_2 = re_map(na,no,nb_1,k);
+for t = T-1:-1:1
+    t0 = min(t, T0);
+    for nb_1 = 1:num_belief(t0)
+        % Determine the optimal policy and compute the value function
+        acV = ones(1, num_action) * dot(h_set(:, nb_1, t0), weights);
+        for na = 1:num_action
+            for no = 1:num_observation
+                nb_2 = mapping(na, no, nb_1, t0);
                 if nb_2 > 0
-                    vt_ac(na) = vt_ac(na) + eta*vt(nb_2);
+                    if no < D + 1
+                        transP = B_set(na, no, nb_1, t0) * channels(na);
+                    else
+                        transP = 1 - channels(na);
+                    end
+                    acV(na) = acV(na) + transP * V(nb_2, t+1);
                 end
             end
         end
-        [vt_pr(nb_1),pl(nb_1,t)] = min(vt_ac);
+        [V(nb_1, t), pi(nb_1, t)] = min(acV);
     end
-    vt(1:bp_num(k)) = vt_pr(1:bp_num(k));
 end
-theo = vt(1)/T0/K;
-fprintf("dp_theo = %d\n",theo);
+
+% Compute the EWSAoI (theo)
+theo = V(1, 1) / T / K;
+
+% Print the EWSAoI (theo)
+fprintf("dp_theo = %.6f\n", theo);
+
 simu = 0;
-if ksi == 1
-    simu = dp_simu(K,D,la,ch,wt,T0,SI,pl,bp_num,h_set,bp_set);
+if simu_switch
+    % Return the EWSAoI (simu)
+    simu = dp_simu(h_set, B_set, num_belief, pi);
 end

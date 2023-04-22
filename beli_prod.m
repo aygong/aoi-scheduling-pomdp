@@ -1,68 +1,93 @@
-function [h_set,bp_set,bp_num,re_map] = beli_prod(K,D,T0,Z,G)
-n_st = D;
-n_ac = K;
-n_ob = D + 1;
-ob = 1:(D+1);
-%% generate the finite set of belief states
-h_set = zeros(K,1,1);
-bp_set = zeros(K,n_st,1,1);
-bp_num = zeros(1,T0);
-re_map = zeros(n_ac,n_ob,1,1);
-bp_num(1) = 1;
-h_set(1:K,1,1) = 2;
-bp_set(1:K,1,1,1) = 1;
-for t = 2:T0
-    bp_nx = zeros(K,n_st);
-    for nb_1 = 1:bp_num(t-1)
-        for na = 1:n_ac
-            for no = 1:n_ob
-                if na == 1 || (ob(no) < D + 1 && na > 1)
-                    h_nx = min(h_set(:,nb_1,t-1)+1,D);
-                    if ob(no) < D + 1
-                        h_nx(na) = min(ob(no)+1,D);
-                    end
-                    for i = 1:K
-                        if i ~= na
-                            bp_nx(i,:) = bp_set(i,:,nb_1,t-1)*Z(:,:,i);
-                        else
-                            bp_nx(i,:) = bp_set(i,:,nb_1,t-1).*G(i,:,ob(no))*Z(:,:,i);
-                        end
-                    end
-                    if sum(bp_nx(na,:)) > 0
-                        bp_nx(na,:) = bp_nx(na,:)./sum(bp_nx(na,:));
-                        whes = 1;
-                        for nb_2 = 1:bp_num(t)
-                            if sum(abs(h_set(:,nb_2,t) - h_nx)) ~= 0
-                                continue
-                            else
-                                if sum(sum(abs(bp_set(:,:,nb_2,t) - bp_nx))) < 1e-14
-                                    re_map(na,no,nb_1,t-1) = nb_2;
-                                    whes = 0;
-                                    break
-                                end
+function [h_set, B_set, num_belief, mapping] = beli_prod(transF, obserF)
+% Generate the finite sets of belief states
+% Declare global variables
+% See aoi_main.m
+global K D T
+
+% Define the basic components of the POMDP functions
+num_state = D;
+num_action = K;
+num_observation = D + 1;
+
+% Initialize the number of belief states
+num_belief = zeros(1, T);
+num_belief(1) = 1;
+
+% Initialize the set of belief states
+% h_set: the set of \mathbf{h}^{t}
+% Shape: (K, num_belief, T0)
+h_set = zeros(K, 1, 1);
+h_set(1:K, 1, 1) = 2;
+% B_set: the set of \mathbb{B}^{t}
+% Shape: (K, num_state, num_belief, T0)
+B_set = zeros(K, num_state, 1, 1);
+B_set(1:K, 1, 1, 1) = 1;
+
+% Initialize the mapping table
+% Shape: (num_action, num_observation, num_belief, T0)
+mapping = zeros(num_action, num_observation, 1, 1);
+
+% Generate the set of belief states
+fprintf("|> Start generation\n");
+for t = 2:T
+    fprintf("|> slot = %d, num_belief = %d\n", t - 1, num_belief(t-1));
+    
+    for nb_1 = 1:num_belief(t-1)
+        for na = 1:num_action
+            for no = 1:num_observation
+                % Generate a new belief state in the present slot
+                % Generate \mathbf{h}^{t}
+                h_t = min(h_set(:, nb_1, t-1) + 1, D);
+                if no < D + 1
+                    h_t(na) = min(no + 1, D);
+                end
+                % Generate \mathbb{B}^{t}
+                B_t = B_set(:, :, nb_1, t-1);
+                B_t(na, :) = B_t(na, :) .* obserF(:, no, na)';
+                for k = 1:K
+                    B_t(k, :) = B_t(k, :) * transF(:, :, k);
+                end
+                
+                if sum(B_t(na, :)) > 0
+                    % Normalize the new belief state
+                    B_t(na, :) = B_t(na, :) / sum(B_t(na, :));
+                    % Check whether the new belief state has existed
+                    % in the set of belief states in the present slot
+                    exist = false;
+                    if num_belief(t) > 0
+                        diff_h = sum(abs(h_set(:, :, t) - h_t));
+                        diff_B = sum(abs(B_set(:, :, :, t) - B_t), [1 2]);        
+                        for nb_2 = 1:num_belief(t)
+                            if diff_h(nb_2) == 0 && diff_B(nb_2) < 1e-12
+                                mapping(na, no, nb_1, t-1) = nb_2;
+                                exist = true;
+                                break
                             end
                         end
-                        if sum(whes) > 0
-                            bp_num(t) = bp_num(t) + 1;
-                            h_set(:,bp_num(t),t) = h_nx;
-                            bp_set(:,:,bp_num(t),t) = bp_nx;
-                            re_map(na,no,nb_1,t-1) = bp_num(t);
-                        end
                     end
-                else
-                    if ob(no) == D+1
-                        re_map(na,no,nb_1,t-1) = re_map(1,no,nb_1,t-1);
+                    if ~exist
+                        % Update the set of belief states in the present slot
+                        num_belief(t) = num_belief(t) + 1;
+                        h_set(:, num_belief(t), t) = h_t;
+                        B_set(:, :, num_belief(t), t) = B_t;
+                        mapping(na, no, nb_1, t-1) = num_belief(t);
                     end
                 end
             end
         end
     end
-%     fprintf("%d,%d\n",t,bp_num(t));
-    df_num = bp_num(t) - bp_num(t-1);
-    df_h = sum(sum(abs(h_set(:,:,t) - h_set(:,:,t-1))));
-    df_bp = sum(sum(sum(abs(bp_set(:,:,:,t) - bp_set(:,:,:,t-1)))));
-    if df_num == 0 && df_bp < 1e-12 && df_h == 0
-        re_map(:,:,1:bp_num(t),t) = re_map(:,:,1:bp_num(t-1),t-1);
-        break
+    
+    if num_belief(t) == num_belief(t-1)
+        % Check whether the set of belief states changes
+        % If yes, the generation will continue
+        % Otherwise, the generation will stop
+        diff_h = sum(abs(h_set(:, :, t) - h_set(:, :, t-1)), 'all');
+        diff_b = sum(abs(B_set(:, :, :, t) - B_set(:, :, :, t-1)), 'all');
+        if diff_h == 0 && diff_b < 1e-12
+            fprintf("|> Stop generation\n");
+            h_set = h_set(:, :, 1:t-1);
+            B_set = B_set(:, :, :, 1:t-1);
+            break
+        end
     end
 end
