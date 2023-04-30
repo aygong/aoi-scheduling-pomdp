@@ -59,7 +59,7 @@ If you find the code helpful, please consider citing our paper:
 
 ```
 @INPROCEEDINGS{gong2020age,
-  title={Age-of-information-based scheduling in multiuser uplinks with stochastic arrivals: A POMDP approach},
+  title={{Age-of-information-based scheduling in multiuser uplinks with stochastic arrivals: A POMDP approach}},
   author={Gong, Aoyu and Zhang, Tong and Chen, He and Zhang, Yijin},
   booktitle={Proc. IEEE GLOBECOM},
   pages={1--6},
