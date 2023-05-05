@@ -35,20 +35,20 @@ You can reproduce our experiments using **MATLAB R2021a**.
 
 ## Folder Structure
 
-```
+```bash
 ./aoi-scheduling-pomdp/
 ├── README.md
 |
 ├── aoi_main.m
-├── sigl_func.m              # Compute the POMDP functions of each end node
-├── beli_prod.m              # Generate the finite sets of belief states
-├── dp_theo.m                # Analyze the optimal policy (partial knowledge)
-├── dp_simu.m                # Simulate the optimal policy (partial knowledge)
-├── mpp_theo.m               # Analyze the myopic policy (partial knowledge)
-├── mpp_simu.m               # Simulate the myopic policy (partial knowledge)
-├── mpf_simu.m               # Simulate the myopic policy (full knowledge)
-├── map_simu.m               # Simulate the MaxAoI policy
-└── rdp_simu.m               # Simulate the randomized policy
+├── sigl_func.m    # Compute the POMDP functions of each end node
+├── beli_prod.m    # Generate the finite sets of belief states
+├── dp_theo.m      # Analyze the optimal policy (partial knowledge)
+├── dp_simu.m      # Simulate the optimal policy (partial knowledge)
+├── mpp_theo.m     # Analyze the myopic policy (partial knowledge)
+├── mpp_simu.m     # Simulate the myopic policy (partial knowledge)
+├── mpf_simu.m     # Simulate the myopic policy (full knowledge)
+├── map_simu.m     # Simulate the MaxAoI policy
+└── rdp_simu.m     # Simulate the randomized policy
 ```
 
 
