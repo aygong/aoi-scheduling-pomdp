@@ -2,7 +2,7 @@
 
 [Aoyu Gong*](https://aygong.com/), Tong Zhang*, [He Chen](http://iiotc.ie.cuhk.edu.hk/), Yijin Zhang
 
-[`IEEE`](https://ieeexplore.ieee.org/document/9348022) | [`arXiv`](https://arxiv.org/pdf/2005.05443.pdf) | [`BibTeX`](#Citation)
+[`IEEE`](https://ieeexplore.ieee.org/document/9348022) | [`arXiv`](https://arxiv.org/pdf/2005.05443.pdf) | [`BibTeX`](#Citation) | [`Related Work`](https://aygong.com/globecom20.html)
 
 <div align="center">
 <p>
